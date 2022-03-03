@@ -10,8 +10,10 @@
         text-align: center;
         margin: 0;
       }
-      img {
+      img,
+      video {
         max-width: 100%;
+        animation: fade-in 1s linear;
       }
       html {
         height: 100%;
@@ -25,6 +27,25 @@
         grid-row-start: 2;
         grid-row-end: 3;
       }
+      @keyframes fade-in {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      @keyframes fade-out {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      .fade-out {
+        animation: fade-out 1s linear;
+      }
     </style>
   </head>
   <body>
@@ -32,9 +53,33 @@
       <h1>yuri.flowers</h1>
       <div id="img"></div>
     </div>
-    <p><a href="https://kuudere.moe">kuudere.moe</a></p>
+    <div class="footer">
+      <p>
+        <label for="interval">Seconds:</label>
+        <input
+          size="5"
+          type="number"
+          id="interval"
+          name="interval"
+          min="1"
+          max="600"
+          value="60"
+        />
+        <button id="toggle_slideshow">Start Slideshow</button>
+      </p>
+      <p><a href="https://kuudere.moe">kuudere.moe</a></p>
+    </div>
     <script>
-      function randomImage(tags) {
+      const default_tags = "yuri";
+      let slideshow;
+
+      const fadeOut = (callback) => {
+        const children = [...document.getElementById("img").children];
+        children.forEach((c) => (c.className = "fade-out"));
+        setTimeout(callback, 1000);
+      };
+
+      const randomImage = (tags) => {
         fetch("https://safebooru.donmai.us/posts/random.json\?tags\=" + tags)
           .then((response) => response.json())
           .then((data) => {
@@ -42,19 +87,62 @@
               console.error("No ID; retrying...");
               return setTimeout(() => randomImage(tags), 1000);
             }
+            const ext = data?.file_ext;
             const a = document.createElement("a");
-            const img = document.createElement("img");
             a.href = `https://safebooru.donmai.us/posts/${data?.id}`;
-            img.src = data?.large_file_url;
-            a.append(img);
-            document.getElementById("img").append(a);
+            // handle pictures
+            if (["gif", "png", "jpg"].includes(ext)) {
+              const img = new Image();
+              a.append(img);
+              img.src = data?.large_file_url;
+              img.onload = () => {
+                fadeOut(() => {
+                  document.getElementById("img").replaceChildren(a);
+                });
+              };
+              // handle videos
+            } else if (["mp4", "webm"].includes(ext)) {
+              const video = document.createElement("video");
+              a.append(video);
+              video.src = data?.large_file_url;
+              video.autoplay = true;
+              video.controls = true;
+              video.loop = true;
+              video.muted = true;
+              fadeOut(() => {
+                document.getElementById("img").replaceChildren(a);
+              });
+              // retry
+            } else {
+              console.error(`Extension "${ext}" not recognized; retrying...`);
+              return setTimeout(() => randomImage(tags), 1000);
+            }
           })
           .catch((error) => {
             console.error(error);
             return setTimeout(() => randomImage(tags), 1000);
           });
-      }
-      randomImage("yuri");
+      };
+
+      const toggleSlideshow = () => {
+        if (slideshow) {
+          document.getElementById("interval").disabled = false;
+          slideshow = clearInterval(slideshow);
+          document.getElementById("toggle_slideshow").textContent =
+            "Start Slideshow";
+        } else {
+          document.getElementById("interval").disabled = true;
+          slideshow = setInterval(
+            () => randomImage(default_tags),
+            document.getElementById("interval").value * 1000
+          );
+          document.getElementById("toggle_slideshow").textContent =
+            "Stop Slideshow";
+        }
+      };
+
+      document.getElementById("toggle_slideshow").onclick = toggleSlideshow;
+      randomImage(default_tags);
     </script>
   </body>
 </html>
