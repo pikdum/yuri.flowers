@@ -97,7 +97,8 @@
               img.src = data?.large_file_url;
               img.onload = () => {
                 fadeOut(() => {
-                  document.getElementById("img").replaceChildren(a);
+                  document.getElementById("img").innerHTML = "";
+                  document.getElementById("img").append(a);
                 });
               };
               // handle videos
@@ -110,7 +111,8 @@
               video.loop = true;
               video.muted = true;
               fadeOut(() => {
-                document.getElementById("img").replaceChildren(a);
+                document.getElementById("img").innerHTML = "";
+                document.getElementById("img").append(a);
               });
               // retry
             } else {
