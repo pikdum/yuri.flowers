@@ -88,6 +88,10 @@
               console.error("No ID; retrying...");
               return setTimeout(() => randomImage(tags), 1000);
             }
+            if (!data?.large_file_url) {
+              console.error("No URL, probably requires gold; retrying...");
+              return setTimeout(() => randomImage(tags), 1000);
+            }
             const ext = data?.file_ext;
             const a = document.createElement("a");
             a.href = `https://safebooru.donmai.us/posts/${data?.id}`;
