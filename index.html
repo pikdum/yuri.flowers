@@ -4,11 +4,18 @@
     <title>yuri.flowers</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
     <style>
+      html,
+      body {
+        height: 100%;
+      }
       body {
         font-family: sans-serif;
         text-align: center;
         margin: 0;
+        transition: background-color 1s linear;
+        display: grid;
       }
       img,
       video {
@@ -16,17 +23,36 @@
         animation: fade-in 1s linear;
         max-height: 100vh;
       }
-      html {
-        height: 100%;
-      }
-      body {
-        min-height: 100%;
-        display: grid;
-        grid-template-rows: 1fr auto;
-      }
       .footer {
-        grid-row-start: 2;
-        grid-row-end: 3;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+      }
+      details {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.5);
+        padding: 1em;
+      }
+      details > summary {
+        list-style: none;
+        font-size: 2em;
+        text-align: right;
+        cursor: pointer;
+        user-select: none;
+      }
+      details[open] > summary {
+        position: absolute;
+        bottom: 0.5em;
+        right: 0.5em;
+      }
+      #img {
+        margin: auto;
+      }
+      #img > h1 {
+        font-size: 5em;
+      }
+      #img > pre {
+        margin-bottom: 100%;
       }
       @keyframes fade-in {
         0% {
@@ -50,27 +76,32 @@
     </style>
   </head>
   <body>
-    <div>
-      <div id="img"></div>
+    <div id="img">
+      <h1>yuri.flowers</h1>
+      <pre>loading random image...</pre>
     </div>
     <div class="footer">
-      <h1>yuri.flowers</h1>
-      <p>
-        <label for="interval">Seconds:</label>
-        <input
-          size="5"
-          type="number"
-          id="interval"
-          name="interval"
-          min="1"
-          max="600"
-          value="60"
-        />
-        <button id="toggle_slideshow">Start Slideshow</button>
-      </p>
-      <p><a href="https://kuudere.moe">kuudere.moe</a></p>
+      <details>
+        <summary>⚙</summary>
+        <p>
+          <label for="interval">Seconds:</label>
+          <input
+            size="5"
+            type="number"
+            id="interval"
+            name="interval"
+            min="1"
+            max="600"
+            value="15"
+          />
+          <button id="toggle_slideshow">Start Slideshow</button>
+          <button id="toggle_fullscreen">Fullscreen</button>
+        </p>
+        <p><a href="https://kuudere.moe">kuudere.moe</a></p>
+      </details>
     </div>
     <script>
+      const colorThief = new ColorThief();
       const default_tags = "yuri";
       let slideshow;
 
@@ -99,8 +130,11 @@
             if (["gif", "png", "jpg"].includes(ext)) {
               const img = new Image();
               a.append(img);
-              img.src = data?.large_file_url;
+              img.crossOrigin = "Anonymous";
+              img.src = data.large_file_url;
               img.onload = () => {
+                const [r, g, b] = colorThief.getColor(img, 1);
+                document.body.style.background = `rgb(${r}, ${g}, ${b})`;
                 fadeOut(() => {
                   document.getElementById("img").innerHTML = "";
                   document.getElementById("img").append(a);
@@ -148,8 +182,17 @@
         }
       };
 
+      const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+          document.querySelector("html").requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      };
+
       document.getElementById("toggle_slideshow").onclick = toggleSlideshow;
-      randomImage(default_tags);
+      document.getElementById("toggle_fullscreen").onclick = toggleFullscreen;
+      setTimeout(() => randomImage(default_tags), 500);
     </script>
   </body>
 </html>
